@@ -2,6 +2,8 @@
 
 Roguelike de mecanografía para navegador. TypeScript + Vite, sin motor (HTML/CSS).
 
+Hecho por **Glicht** — [github.com/tipoxd](https://github.com/tipoxd) · [glicht.vercel.app](https://glicht.vercel.app) · Jugar: https://type-and-run.vercel.app
+
 Tema: un mago defiende su torre de monstruos escribiendo hechizos. Daño = Poder × Magia (× los amuletos de ×Magia × la racha 🔥).
 En el código algunos nombres internos siguen siendo los del GDD original (daemons = amuletos, bits = oro, bytes = poder, mult = magia, overclock = racha, fragments = cristales).
 

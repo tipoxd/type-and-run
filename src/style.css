@@ -744,3 +744,11 @@ body.has-3d .shop .card { background: rgba(43, 32, 88, .82); }
   .shop-layout { grid-template-columns: 1fr; }
   .shop-side { position: static; }
 }
+
+/* Crédito del autor */
+.credit { display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 1.6rem; font-size: .9rem; color: var(--muted); }
+.credit b { color: var(--text); }
+.credit a { display: inline-flex; align-items: center; gap: .35rem; color: var(--muted); text-decoration: none; padding: .3rem .7rem; border: 1px solid #ffffff1a; border-radius: 99px; transition: color .2s, border-color .2s, background .2s; }
+.credit a:hover { color: var(--text); border-color: var(--crystal); background: #ffffff0d; }
+.credit .gh { display: inline-flex; width: 1em; height: 1em; }
+.credit .gh svg { width: 100%; height: 100%; }
