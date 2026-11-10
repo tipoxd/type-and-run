@@ -14,6 +14,7 @@ import { daemonCard } from './ui/cards';
 import { startCombat } from './ui/combatView';
 import { dec, h, markup, num, toast } from './ui/dom';
 import { showShop } from './ui/shopView';
+import { createDemo } from './ui/demo';
 import { createCoach } from './ui/tips';
 
 // Para pasar a base de datos: cambia esta línea por `new ApiBackend(url, getToken)`.
@@ -70,36 +71,77 @@ function back(label = 'Volver') {
 function showMenu() {
   setScreen(() => {
     const cont = save.currentRun;
-    const firstTime = save.history.length === 0;
-    app.replaceChildren(
-      h('div', { class: 'screen menu' },
-        h('div', { class: 'logo-icon' }, '🧙'),
-        h('div', { class: 'logo' }, 'Type & Run'),
+    const isNew = save.history.length === 0 && !cont;
+    const demo = createDemo(save.options.reduceFx);
+
+    // Botones principales: el nuevo ve "Jugar ahora"; el que vuelve, "Continuar"
+    const actions = h('div', { class: 'home-actions' },
+      cont
+        ? h('button', { class: 'btn primary big cta', onclick: () => resumeRun(cont) }, `▶ Continuar partida`, h('small', null, `Reino ${cont.node} · ${SECTOR_NAMES[cont.sector]}`))
+        : h('button', { class: 'btn primary big cta', onclick: () => newRunFlow() }, '▶ Jugar ahora', h('small', null, isNew ? 'Empieza en 1 minuto' : 'Nueva partida')),
+      cont ? h('button', { class: 'btn ghost', onclick: () => newRunFlow() }, 'Empezar una partida nueva') : null,
+      h('button', { class: `btn ${isNew ? '' : 'ghost'}`, onclick: showHowTo }, '📜 Cómo se juega', isNew ? h('small', null, ' · 4 pasos') : null),
+      h('p', { class: 'home-note' }, '✅ Gratis', h('span', null, '·'), '✅ Sin registro', h('span', null, '·'), '✅ Se guarda solo', h('span', { class: 'kbd-hint' }, ' · o pulsa ', h('kbd', null, 'Enter'))),
+    );
+
+    const hero = h('section', { class: 'home-hero' },
+      h('div', { class: 'home-text' },
+        isNew ? h('div', { class: 'home-badge' }, '👋 ¡Bienvenido, aprendiz!') : h('div', { class: 'home-badge back' }, '🧙 ¡Hola de nuevo!'),
+        h('h1', { class: 'logo' }, 'Type & Run'),
         h('div', { class: 'logo-sub' }, 'La Torre de los Hechizos'),
-        h('p', { class: 'tagline' }, 'Los monstruos atacan tu torre. Escribe sus palabras para lanzar hechizos. Compra amuletos para hacerte cada vez más fuerte.'),
-        save.history.length
-          ? h('div', { class: 'menu-stats' },
-              h('div', null, h('b', { class: 'c-crystal' }, `💎 ${num(save.fragments)}`), h('span', null, 'cristales')),
-              h('div', null, h('b', null, String(save.calWpm)), h('span', null, 'palabras/min (prueba)')),
-              h('div', null, h('b', null, `🏆 ${save.wins}`), h('span', null, 'victorias')),
-            )
-          : null,
-        h('div', { class: 'menu-buttons' },
-          cont ? h('button', { class: 'btn primary big', onclick: () => resumeRun(cont) }, `▶ Continuar (Reino ${cont.node} · ${SECTOR_NAMES[cont.sector]})`) : null,
-          h('button', { class: `btn ${cont ? '' : 'primary big'}`, onclick: () => newRunFlow() }, cont ? 'Nueva partida (se pierde la actual)' : '▶ Jugar'),
-          firstTime ? h('button', { class: 'btn', onclick: showHowTo }, '📜 Cómo se juega (1 minuto)') : null,
-          h('div', { class: 'menu-grid' },
-            h('button', { class: 'btn', onclick: showUpgrades }, '🏰 Mejoras'),
-            h('button', { class: 'btn', onclick: showCompendium }, '📖 Amuletos'),
-            h('button', { class: 'btn', onclick: showProgress }, '📈 Progreso'),
-            h('button', { class: 'btn', onclick: showOptions }, '⚙️ Opciones'),
-          ),
-          firstTime ? null : h('button', { class: 'btn ghost small', onclick: showHowTo }, '📜 Cómo se juega'),
-        ),
+        h('p', { class: 'home-tagline' }, 'Escribe palabras para lanzar hechizos y ', h('b', null, 'defiende tu torre'), ' de los monstruos. Cuanto mejor escribes, más fuerte golpeas.'),
+        actions,
+      ),
+      demo.el,
+    );
+
+    const howCards = h('section', { class: 'home-how' },
+      ...[
+        { icon: '⌨️', title: 'Escribe', text: 'Cada monstruo lleva una palabra. Teclea la primera letra para apuntar y termínala para atacar.' },
+        { icon: '✨', title: 'Lanza hechizos', text: 'Las palabras largas y sin errores hacen más daño. Muchas seguidas encienden tu racha 🔥.' },
+        { icon: '🛒', title: 'Hazte más fuerte', text: 'Entre oleadas compras amuletos con oro. Supera los 3 reinos para salvar la torre.' },
+      ].map((c, i) => h('div', { class: 'how-card', style: { animationDelay: `${0.15 + i * 0.1}s` } },
+        h('div', { class: 'how-icon' }, c.icon), h('div', { class: 'how-num' }, `Paso ${i + 1}`), h('h3', null, c.title), h('p', null, c.text))),
+    );
+
+    const facts = h('section', { class: 'home-facts' },
+      h('div', null, '⏱️', h('span', null, 'Partidas de unos 10 minutos')),
+      h('div', null, '🐢', h('span', null, 'Los monstruos van a tu ritmo')),
+      h('div', null, '💡', h('span', null, 'Consejos mientras juegas')),
+      h('div', null, '🎧', h('span', null, 'Mejor con sonido')),
+    );
+
+    const stats = save.history.length
+      ? h('section', { class: 'home-stats' },
+          h('div', null, h('b', { class: 'c-crystal' }, `💎 ${num(save.fragments)}`), h('span', null, 'cristales')),
+          h('div', null, h('b', null, `⚡ ${save.calWpm}`), h('span', null, 'palabras/min')),
+          h('div', null, h('b', null, `🏆 ${save.wins}`), h('span', null, 'victorias')),
+          h('div', null, h('b', null, `🎮 ${save.history.length}`), h('span', null, 'partidas')),
+        )
+      : null;
+
+    const more = h('nav', { class: 'home-more' },
+      h('button', { class: 'btn', onclick: showUpgrades }, '🏰 Mejoras'),
+      h('button', { class: 'btn', onclick: showCompendium }, '📖 Amuletos'),
+      h('button', { class: 'btn', onclick: showProgress }, '📈 Progreso'),
+      h('button', { class: 'btn', onclick: showOptions }, '⚙️ Opciones'),
+    );
+
+    app.replaceChildren(
+      h('div', { class: `screen home${isNew ? ' is-new' : ''}` },
+        hero,
+        stats,
+        isNew ? howCards : more,
+        isNew ? facts : null,
+        isNew ? h('div', { class: 'home-more-new' }, more) : null,
         credit(),
       ),
     );
-    return keyHandler({ enter: () => (cont ? resumeRun(cont) : newRunFlow()) });
+    const off = keyHandler({ enter: () => (cont ? resumeRun(cont) : newRunFlow()) });
+    return () => {
+      off();
+      demo.destroy();
+    };
   });
 }
 
@@ -195,6 +237,11 @@ function showCalibration(next: () => void) {
 
 // ── Elegir mago ───────────────────────────────────────────────
 function showKernelSelect() {
+  // Con un solo mago disponible no hace falta elegir: se empieza directamente
+  if (save.unlockedKernels.length <= 1) {
+    startNewRun('base');
+    return;
+  }
   setScreen(() => {
     app.replaceChildren(
       h('div', { class: 'screen center-screen' },
